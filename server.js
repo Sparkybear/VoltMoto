@@ -11,19 +11,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Dynamic Price Calculation
+// Dynamic Price Calculation with Shipping
 function calculateOrderAmount(items) {
-  let totalInCents = 0;
+  let itemsTotalInCents = 0;
   
   items.forEach(item => {
-    // Both Yellow and White options now retain the updated base price of $35.00
     const basePrice = 35.00; 
-    
     const quantity = item.qty || 1;
-    totalInCents += (basePrice * 100) * quantity; // Convert to Stripe cents ($35.00 -> 3500 cents)
+    itemsTotalInCents += (basePrice * 100) * quantity;
   });
 
-  return totalInCents;
+  // Add flat shipping fee of $7.50 (750 cents)
+  const shippingInCents = 750; 
+  
+  return itemsTotalInCents + shippingInCents;
 }
 
 app.post('/create-payment-intent', async (req, res) => {
@@ -36,16 +37,14 @@ app.post('/create-payment-intent', async (req, res) => {
 
     const amountInCents = calculateOrderAmount(items);
 
-    // Build a clean, readable breakdown of items (e.g., "1x Surron Light Bee X (Yellow)")
     const itemDescriptions = items.map(item => {
       return `${item.qty}x ${item.bike} (${item.color})`;
     }).join(', ');
 
-    // Create the payment intent with explicit descriptions and metadata
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: 'usd',
-      description: `VoltMoto Order: ${itemDescriptions}`, // Shows at the very top of your payment window
+      description: `VoltMoto Order: ${itemDescriptions} (+ $7.50 Shipping)`,
       automatic_payment_methods: {
         enabled: true,
       },
@@ -53,7 +52,8 @@ app.post('/create-payment-intent', async (req, res) => {
       metadata: {
         customer_name: name,
         customer_email: email,
-        items_ordered: itemDescriptions // Populates the metadata sidebar in the Stripe dashboard
+        items_ordered: itemDescriptions,
+        shipping_fee: "$7.50"
       }
     });
 
