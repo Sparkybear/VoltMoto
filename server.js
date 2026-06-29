@@ -2,36 +2,30 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-// Ensure your Stripe Secret Key is loaded securely from environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
   console.error("CRITICAL ERROR: STRIPE_SECRET_KEY is not set inside Render environment variables!");
 }
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
-
-// 1. Enable CORS so your GitHub Pages frontend domain can securely communicate with Render
 app.use(cors());
-
-// 2. Enable JSON parsing to read the cart body sent by your frontend
 app.use(express.json());
 
-// Helper function to safely calculate order totals on the server.
-// Stripe calculates transactions in the lowest currency unit (cents).
+// Dynamic Price Calculation
 function calculateOrderAmount(items) {
   let totalInCents = 0;
   
   items.forEach(item => {
-    // Default VoltMoto plug-and-play headlight base price: $150.00 -> 15000 cents
-    const basePriceInCents = 15000; 
+    // Both Yellow and White options now retain the updated base price of $35.00
+    const basePrice = 35.00; 
+    
     const quantity = item.qty || 1;
-    totalInCents += basePriceInCents * quantity;
+    totalInCents += (basePrice * 100) * quantity; // Convert to Stripe cents ($35.00 -> 3500 cents)
   });
 
   return totalInCents;
 }
 
-// 3. Main Route: Receives cart items from frontend and requests a clientSecret from Stripe
 app.post('/create-payment-intent', async (req, res) => {
   try {
     const { items, email, name } = req.body;
@@ -42,20 +36,27 @@ app.post('/create-payment-intent', async (req, res) => {
 
     const amountInCents = calculateOrderAmount(items);
 
-    // Create the payment intent via Stripe API
+    // Build a clean, readable breakdown of items (e.g., "1x Surron Light Bee X (Yellow)")
+    const itemDescriptions = items.map(item => {
+      return `${item.qty}x ${item.bike} (${item.color})`;
+    }).join(', ');
+
+    // Create the payment intent with explicit descriptions and metadata
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: 'usd',
+      description: `VoltMoto Order: ${itemDescriptions}`, // Shows at the very top of your payment window
       automatic_payment_methods: {
         enabled: true,
       },
       receipt_email: email,
       metadata: {
-        customer_name: name
+        customer_name: name,
+        customer_email: email,
+        items_ordered: itemDescriptions // Populates the metadata sidebar in the Stripe dashboard
       }
     });
 
-    // Send back the initialization key that Stripe Elements requires to display fields
     res.send({
       clientSecret: paymentIntent.client_secret,
     });
@@ -66,6 +67,5 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
-// Start listening on Render's assigned dynamic port, defaulting to 4242 locally
 const PORT = process.env.PORT || 4242;
 app.listen(PORT, () => console.log(`VoltMoto server initializing smoothly on port ${PORT}`));
