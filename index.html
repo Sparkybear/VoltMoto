@@ -628,9 +628,16 @@ function changeQty(idx, delta) {
 function removeItem(idx) { cart.splice(idx, 1); updateCartUI(); }
 
 function cartTotal() {
-  var t = 0;
-  for (var i = 0; i < cart.length; i++) t += cart[i].price * cart[i].qty;
-  return t;
+  var total = 0;
+  cart.forEach(function(item) {
+    total += 35 * (item.qty || 1);
+  });
+  return total;
+}
+
+function grandTotalWithShipping() {
+  if (cart.length === 0) return 0;
+  return cartTotal() + 7.50;
 }
 
 function checkout() {
@@ -645,9 +652,30 @@ function checkout() {
     div.innerHTML = '<div><div class="checkout-line-name">Baja Headlight \u00B7 ' + c + ' \u00D7 ' + cart[i].qty + '</div><div class="checkout-line-bike">' + cart[i].bike + '</div></div><div class="checkout-line-price">$' + (cart[i].price * cart[i].qty) + '</div>';
     itemsEl.appendChild(div);
   }
-  var total = cartTotal();
-  document.getElementById('checkoutTotal').innerHTML = '<span>Total</span><span>$' + total + '</span>';
-  document.getElementById('payBtn').textContent = 'Pay $' + total;
+
+  // Get our mathematical totals
+  var subtotal = cartTotal();
+  var finalTotal = grandTotalWithShipping();
+
+  // ====== UPDATED FOR SHIPPING VISUALS (Adjustment B & C) ======
+  document.getElementById('checkoutTotal').innerHTML = 
+    '<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:15px; color:#aaa; width:100%;">' +
+      '<span>Items Subtotal</span>' +
+      '<span>$' + subtotal + '</span>' +
+    '</div>' +
+    '<div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size:15px; color:#aaa; width:100%;">' +
+      '<span>Shipping</span>' +
+      '<span>$7.50</span>' +
+    '</div>' +
+    '<div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold; border-top:1px solid #333; padding-top:12px; width:100%;">' +
+      '<span>Total</span>' +
+      '<span style="color:#c8ff00;">$' + finalTotal.toFixed(2) + '</span>' +
+    '</div>';
+
+  // Update the button text to show the grand total with shipping included
+  document.getElementById('payBtn').textContent = 'Pay $' + finalTotal.toFixed(2);
+  // ==============================================================
+
   document.getElementById('checkoutPage').classList.add('open');
   initPayment();
 }
@@ -752,11 +780,15 @@ async function placeOrder() {
 }
 
 function showConfirmation(pi) {
-  var total = cartTotal();
+  // ====== UPDATED TO SHOW TOTAL WITH SHIPPING ======
+  var total = grandTotalWithShipping().toFixed(2);
+  // =================================================
+  
   var fname = document.getElementById('fname').value;
   var orderId = (pi && pi.id ? pi.id : 'VM-' + Math.random().toString(36).substr(2, 8).toUpperCase());
   document.getElementById('checkoutContent').innerHTML = '<div class="order-confirm"><div class="order-confirm-icon">\u26A1</div><div class="order-confirm-title">Payment Successful!</div><div class="order-confirm-id">' + orderId + '</div><div class="order-confirm-sub">Thanks ' + fname + '! Your VoltMoto headlight' + (cart.length > 1 ? 's' : '') + ' will be on the way soon. A receipt is on its way to your email.</div><div style="font-family:Barlow Condensed,sans-serif;font-size:36px;font-weight:800;color:#c8ff00;margin-bottom:24px;">$' + total + '</div><button class="btn-primary" onclick="finishOrder()">Back to VoltMoto</button></div>';
 }
+  
 function selectImg(idx) {
   document.getElementById('galleryMainImg').src = images[idx];
   var thumbs = document.querySelectorAll('.gallery-thumb');
