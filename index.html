@@ -657,19 +657,28 @@ function checkout() {
   var subtotal = cartTotal();
   var finalTotal = grandTotalWithShipping();
 
-  // ====== UPDATED FOR SHIPPING VISUALS (Adjustment B & C) ======
+  // ====== CLEAN SPREADSHEET BREAKDOWN LAYOUT ======
   document.getElementById('checkoutTotal').innerHTML = 
-    '<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:15px; color:#aaa; width:100%;">' +
-      '<span>Items Subtotal</span>' +
-      '<span>$' + subtotal + '</span>' +
-    '</div>' +
-    '<div style="display:flex; justify-content:space-between; margin-bottom:16px; font-size:15px; color:#aaa; width:100%;">' +
-      '<span>Shipping</span>' +
-      '<span>$7.50</span>' +
-    '</div>' +
-    '<div style="display:flex; justify-content:space-between; font-size:24px; font-weight:bold; border-top:1px solid #333; padding-top:12px; width:100%;">' +
-      '<span>Total</span>' +
-      '<span style="color:#c8ff00;">$' + finalTotal.toFixed(2) + '</span>' +
+    '<div style="width: 100%; font-family: \'DM Sans\', sans-serif; background: #0c0c0c; border: 1px solid #222; border-radius: 6px; padding: 16px; margin-top: 15px;">' +
+      
+      // Items Subtotal Row
+      '<div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #1a1a1a; font-size: 14px;">' +
+        '<span style="color: #888;">Items Subtotal</span>' +
+        '<span style="color: #fff; font-weight: 500;">$' + subtotal.toFixed(2) + '</span>' +
+      '</div>' +
+      
+      // Shipping Row
+      '<div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 14px;">' +
+        '<span style="color: #888;">Shipping & Handling</span>' +
+        '<span style="color: #fff; font-weight: 500;">$7.50</span>' +
+      '</div>' +
+      
+      // Grand Total Row
+      '<div style="display: flex; justify-content: space-between; padding-top: 12px; font-size: 20px; font-weight: bold; font-family: \'Barlow Condensed\', sans-serif; letter-spacing: 0.5px;">' +
+        '<span style="color: #fff; text-transform: uppercase;">Total USD</span>' +
+        '<span style="color: #c8ff00;">$' + finalTotal.toFixed(2) + '</span>' +
+      '</div>' +
+
     '</div>';
 
   // Update the button text to show the grand total with shipping included
