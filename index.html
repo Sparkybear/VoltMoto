@@ -368,10 +368,16 @@ footer{padding:32px 16px;border-top:1px solid #111;text-align:center;}
       </select>
       <div class="variant-bike" id="variantBike"></div>
       <div class="select-label">Lens Color</div>
-      <div class="color-options" id="colorOptions">
-        <div class="color-opt active" data-color="white" onclick="selectColor(this)"><span class="color-swatch white"></span>White</div>
-        <div class="color-opt" data-color="yellow" onclick="selectColor(this)"><span class="color-swatch yellow"></span>Yellow</div>
-      </div>
+<div class="color-options" id="colorOptions">
+  <div class="color-opt active" data-color="white" onclick="selectColor(this)">
+    <span class="color-swatch white"></span>White
+  </div>
+  
+  <div class="color-opt out-of-stock" data-color="yellow" style="opacity: 0.5; cursor: not-allowed; position: relative;">
+    <span class="color-swatch yellow" style="filter: grayscale(50%);"></span>Yellow 
+    <span style="font-size: 10px; color: #ff4444; margin-left: 5px; font-weight: bold; text-transform: uppercase;">(Out of Stock)</span>
+  </div>
+</div>
       <button class="btn-primary" id="cartBtn" onclick="addToCart()">Add to Cart &mdash; $35</button>
     </div>
   </div>
