@@ -465,11 +465,6 @@ footer{padding:32px 16px;border-top:1px solid #111;text-align:center;}
   </div>
 </div>
 
-  <div class="discount-container" style="display: flex; gap: 8px; margin-top: 15px; font-family: 'DM Sans', sans-serif;">
-  <input type="text" id="promoInput" placeholder="Discount Code" style="flex: 1; padding: 10px; background: #0c0c0c; border: 1px solid #222; border-radius: 6px; color: #fff; font-size: 14px; text-transform: uppercase;">
-  <button onclick="applyDiscount()" style="background: #c8ff00; color: #000; border: none; padding: 0 16px; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px;">Apply</button>
-</div>
-<div id="discountMsg" style="font-size: 12px; margin-top: 5px; font-family: 'DM Sans', sans-serif; display: none;"></div>
   
 <!-- CHECKOUT PAGE -->
 <div class="checkout-page" id="checkoutPage">
@@ -479,6 +474,12 @@ footer{padding:32px 16px;border-top:1px solid #111;text-align:center;}
     <div class="checkout-summary">
       <div class="checkout-summary-title">Order Summary</div>
       <div id="checkoutItems"></div>
+
+      <div class="discount-container" style="display: flex; gap: 8px; margin: 15px 0; padding-top: 10px; border-top: 1px solid #222;">
+        <input type="text" id="promoInput" placeholder="Discount Code" style="flex: 1; padding: 10px 14px; background: #0c0c0c; border: 1px solid #222; border-radius: 8px; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
+        <button type="button" onclick="applyDiscount()" style="background: #c8ff00; color: #000; border: none; padding: 0 16px; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px; transition: opacity 0.2s;">Apply</button>
+      </div>
+      <div id="discountMsg" style="font-size: 12px; margin-bottom: 15px; font-family: 'DM Sans', sans-serif; display: none; font-weight: 500;"></div>
       <div class="checkout-line checkout-line-total" id="checkoutTotal"><span>Total</span><span>$0</span></div>
     </div>
     <div class="form-section">
