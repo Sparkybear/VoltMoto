@@ -538,9 +538,17 @@ function selectBike(el) {
 }
 
 function selectColor(el) {
+  // ====== ADDED OUT OF STOCK CHECK ======
+  if (el.classList.contains('out-of-stock')) {
+    return; // Exit immediately so they can't select yellow!
+  }
+  // ======================================
+
   selectedColor = el.getAttribute('data-color');
   var opts = document.querySelectorAll('.color-opt');
-  for (var i = 0; i < opts.length; i++) opts[i].classList.toggle('active', opts[i] === el);
+  for (var i = 0; i < opts.length; i++) {
+    opts[i].classList.toggle('active', opts[i] === el);
+  }
 }
 
 var cart = [];
