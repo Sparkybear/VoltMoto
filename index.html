@@ -465,6 +465,12 @@ footer{padding:32px 16px;border-top:1px solid #111;text-align:center;}
   </div>
 </div>
 
+  <div class="discount-container" style="display: flex; gap: 8px; margin-top: 15px; font-family: 'DM Sans', sans-serif;">
+  <input type="text" id="promoInput" placeholder="Discount Code" style="flex: 1; padding: 10px; background: #0c0c0c; border: 1px solid #222; border-radius: 6px; color: #fff; font-size: 14px; text-transform: uppercase;">
+  <button onclick="applyDiscount()" style="background: #c8ff00; color: #000; border: none; padding: 0 16px; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px;">Apply</button>
+</div>
+<div id="discountMsg" style="font-size: 12px; margin-top: 5px; font-family: 'DM Sans', sans-serif; display: none;"></div>
+  
 <!-- CHECKOUT PAGE -->
 <div class="checkout-page" id="checkoutPage">
   <div class="checkout-inner" id="checkoutContent">
@@ -651,7 +657,51 @@ function cartTotal() {
 
 function grandTotalWithShipping() {
   if (cart.length === 0) return 0;
-  return cartTotal() + 7.50;
+  
+  var baseTotal = cartTotal();
+  
+  // 1. Calculate the discount amount on items if any (e.g., 0.10 for 10% off)
+  var discountAmount = baseTotal * (typeof activeDiscount !== 'undefined' ? activeDiscount : 0);
+  var discountedSubtotal = baseTotal - discountAmount;
+  
+  // 2. Determine shipping cost based on whether free shipping is active
+  var isFreeShipping = typeof freeShippingActive !== 'undefined' && freeShippingActive;
+  var shippingCost = isFreeShipping ? 0 : 7.50;
+  
+  // 3. Return the grand total
+  return discountedSubtotal + shippingCost;
+}
+  
+// ====== DISCOUNT STATE VARIABLES ======
+var activeDiscount = 0;       // Percentage off (e.g., 0.10 for 10%)
+var freeShippingActive = false; // Tracks if shipping is free
+// ======================================
+
+function applyDiscount() {
+  var code = document.getElementById('promoInput').value.trim().toUpperCase();
+  var msg = document.getElementById('discountMsg');
+  
+  if (code === 'VOLT10') {
+    activeDiscount = 0.10; // 10% off items
+    freeShippingActive = false;
+    msg.style.color = '#c8ff00';
+    msg.textContent = '10% discount applied!';
+  } else if (code === 'FREESHIP') {
+    activeDiscount = 0;
+    freeShippingActive = true; // Free shipping
+    msg.style.color = '#c8ff00';
+    msg.textContent = 'Free shipping applied!';
+  } else {
+    activeDiscount = 0;
+    freeShippingActive = false;
+    msg.style.color = '#ff4444';
+    msg.textContent = 'Invalid discount code.';
+  }
+  
+  msg.style.display = 'block';
+  
+  // Refresh the checkout display to update the math!
+  checkout();
 }
 
 function checkout() {
@@ -667,24 +717,39 @@ function checkout() {
     itemsEl.appendChild(div);
   }
 
-  // Get our mathematical totals
+  // Get our mathematical totals (handling discount cases gracefully)
   var subtotal = cartTotal();
+  var discountPercent = typeof activeDiscount !== 'undefined' ? activeDiscount : 0;
+  var discountAmount = subtotal * discountPercent;
+  
+  var isFreeShipping = typeof freeShippingActive !== 'undefined' && freeShippingActive;
+  var finalShipping = isFreeShipping ? 0 : 7.50;
   var finalTotal = grandTotalWithShipping();
 
-  // ====== CLEAN SPREADSHEET BREAKDOWN LAYOUT ======
-  document.getElementById('checkoutTotal').innerHTML = 
+  // ====== UPDATED SPREADSHEET BREAKDOWN LAYOUT ======
+  var breakdownHTML = 
     '<div style="width: 100%; font-family: \'DM Sans\', sans-serif; background: #0c0c0c; border: 1px solid #222; border-radius: 6px; padding: 16px; margin-top: 15px;">' +
       
       // Items Subtotal Row
       '<div style="display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #1a1a1a; font-size: 14px;">' +
         '<span style="color: #888;">Items Subtotal</span>' +
         '<span style="color: #fff; font-weight: 500;">$' + subtotal.toFixed(2) + '</span>' +
-      '</div>' +
+      '</div>';
+
+  // Only inject the Discount row if there's actually an active percentage discount (like VOLT10)
+  if (discountPercent > 0) {
+    breakdownHTML += 
+      '<div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1a1a1a; font-size: 14px;">' +
+        '<span style="color: #ff4444;">Discount (' + (discountPercent * 100) + '%)</span>' +
+        '<span style="color: #ff4444; font-weight: 500;">-$' + discountAmount.toFixed(2) + '</span>' +
+      '</div>';
+  }
       
-      // Shipping Row
+  // Shipping Row (Displays "FREE" or "$7.50")
+  breakdownHTML += 
       '<div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 14px;">' +
         '<span style="color: #888;">Shipping & Handling</span>' +
-        '<span style="color: #fff; font-weight: 500;">$7.50</span>' +
+        '<span style="color: #fff; font-weight: 500;">' + (isFreeShipping ? 'FREE' : '$7.50') + '</span>' +
       '</div>' +
       
       // Grand Total Row
@@ -695,13 +760,16 @@ function checkout() {
 
     '</div>';
 
-  // Update the button text to show the grand total with shipping included
+  document.getElementById('checkoutTotal').innerHTML = breakdownHTML;
+
+  // Update the payment button text with the discounted/adjusted grand total
   document.getElementById('payBtn').textContent = 'Pay $' + finalTotal.toFixed(2);
   // ==============================================================
 
   document.getElementById('checkoutPage').classList.add('open');
   initPayment();
 }
+  
 function closeCheckout() { document.getElementById('checkoutPage').classList.remove('open'); }
 
 // Create a PaymentIntent on the server and mount the Stripe Payment Element.
