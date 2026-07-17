@@ -793,7 +793,7 @@ async function initPayment() {
   try {
     if (!stripe) stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
     
-    // ====== UPDATED FETCH BODY TO INCLUDE ACTIVE DISCOUNTS ======
+// ====== UPDATED FETCH CALL: SENDS CART, DISCOUNTS, AND EMAIL ======
     var res = await fetch(API_BASE + '/create-payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -801,11 +801,12 @@ async function initPayment() {
         items: cart.map(function(i){ 
           return { bikeId: i.bikeId, bike: i.bike, color: i.color, qty: i.qty }; 
         }),
+        email: document.getElementById('email') ? document.getElementById('email').value.trim() : '', // <--- SENDS EMAIL TO STRIPE!
         discountPercent: typeof activeDiscount !== 'undefined' ? activeDiscount : 0,
         isFreeShipping: typeof freeShippingActive !== 'undefined' && freeShippingActive
       })
     });
-    // ============================================================
+    // ==================================================================
 
     if (!res.ok) throw new Error('Server returned ' + res.status);
     var data = await res.json();
@@ -880,6 +881,12 @@ async function placeOrder() {
 
   showConfirmation(result.paymentIntent);
 }
+  // Automatically update Stripe with the email when they finish typing it
+document.getElementById('email').addEventListener('change', function() {
+  if (this.value.trim()) {
+    initPayment(); // This rebuilds the payment intent with the fresh email!
+  }
+});
 
 function showConfirmation(pi) {
   // ====== UPDATED TO SHOW TOTAL WITH SHIPPING ======
