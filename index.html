@@ -792,11 +792,21 @@ async function initPayment() {
 
   try {
     if (!stripe) stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+    
+    // ====== UPDATED FETCH BODY TO INCLUDE ACTIVE DISCOUNTS ======
     var res = await fetch(API_BASE + '/create-payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: cart.map(function(i){ return { bikeId: i.bikeId, bike: i.bike, color: i.color, qty: i.qty }; }) })
+      body: JSON.stringify({ 
+        items: cart.map(function(i){ 
+          return { bikeId: i.bikeId, bike: i.bike, color: i.color, qty: i.qty }; 
+        }),
+        discountPercent: typeof activeDiscount !== 'undefined' ? activeDiscount : 0,
+        isFreeShipping: typeof freeShippingActive !== 'undefined' && freeShippingActive
+      })
     });
+    // ============================================================
+
     if (!res.ok) throw new Error('Server returned ' + res.status);
     var data = await res.json();
     if (!data.clientSecret) throw new Error(data.error || 'No client secret returned');
