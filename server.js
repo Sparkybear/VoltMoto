@@ -29,31 +29,25 @@ function calculateOrderAmount(items) {
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
-    // 1. Pull variables from the incoming frontend request
     const { items, email, name, discountPercent, isFreeShipping } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).send({ error: "Your cart appears to be empty." });
     }
 
-    // 2. Base headlight price calculation ($35.00)
+    // A simple, classic for-loop (safer with async/await scopes)
     let baseTotal = 0;
-    items.forEach(item => {
-      baseTotal += 35.00 * item.qty;
-    });
+    for (let i = 0; i < items.length; i++) {
+      baseTotal += 35.00 * items[i].qty;
+    }
 
-    // 3. Apply percentage discount (like 0.10 for 10% off)
     const activeDiscount = discountPercent || 0;
     const discountAmount = baseTotal * activeDiscount;
     const discountedSubtotal = baseTotal - discountAmount;
 
-    // 4. Calculate shipping cost ($0 if free shipping, otherwise $7.50)
     const shippingCost = isFreeShipping ? 0 : 7.50;
-
-    // 5. Convert final price to cents for Stripe
     const finalTotalCents = Math.round((discountedSubtotal + shippingCost) * 100);
 
-    // 6. Create Stripe Payment Intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalTotalCents,
       currency: 'usd',
@@ -62,14 +56,13 @@ app.post('/create-payment-intent', async (req, res) => {
       automatic_payment_methods: { enabled: true },
     });
 
-    // 7. Send client secret back to browser
     res.send({ clientSecret: paymentIntent.client_secret });
 
   } catch (e) {
     console.error("Stripe Error:", e.message);
     res.status(400).send({ error: e.message });
   }
-}); // <-- THIS CLOSES APP.POST
+});
 
     const amountInCents = calculateOrderAmount(items);
 
