@@ -35,10 +35,10 @@ app.post('/create-payment-intent', async (req, res) => {
       return res.status(400).send({ error: "Your cart appears to be empty." });
     }
 
-    // A simple, classic for-loop (safer with async/await scopes)
+    // Secure calculation using a standard for...of loop (prevents scope confusion)
     let baseTotal = 0;
-    for (let i = 0; i < items.length; i++) {
-      baseTotal += 35.00 * items[i].qty;
+    for (const item of items) {
+      baseTotal += 35.00 * item.qty;
     }
 
     const activeDiscount = discountPercent || 0;
@@ -48,6 +48,7 @@ app.post('/create-payment-intent', async (req, res) => {
     const shippingCost = isFreeShipping ? 0 : 7.50;
     const finalTotalCents = Math.round((discountedSubtotal + shippingCost) * 100);
 
+    // This await is now guaranteed to sit cleanly inside the async wrapper
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalTotalCents,
       currency: 'usd',
