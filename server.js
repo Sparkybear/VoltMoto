@@ -11,22 +11,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Dynamic Price Calculation with Shipping
-function calculateOrderAmount(items) {
-  let itemsTotalInCents = 0;
-  
-  items.forEach(item => {
-    const basePrice = 35.00; 
-    const quantity = item.qty || 1;
-    itemsTotalInCents += (basePrice * 100) * quantity;
-  });
-
-  // Add flat shipping fee of $7.50 (750 cents)
-  const shippingInCents = 750; 
-  
-  return itemsTotalInCents + shippingInCents;
-}
-
 app.post('/create-payment-intent', async (req, res) => {
   try {
     const { items, email, name, discountPercent, isFreeShipping } = req.body;
@@ -35,61 +19,46 @@ app.post('/create-payment-intent', async (req, res) => {
       return res.status(400).send({ error: "Your cart appears to be empty." });
     }
 
-    // Secure calculation using a standard for...of loop (prevents scope confusion)
+    // 1. Secure calculation using a standard loop
     let baseTotal = 0;
     for (const item of items) {
       baseTotal += 35.00 * item.qty;
     }
 
+    // 2. Apply percentage discount (like 0.10 for 10% off)
     const activeDiscount = discountPercent || 0;
     const discountAmount = baseTotal * activeDiscount;
     const discountedSubtotal = baseTotal - discountAmount;
 
+    // 3. Determine shipping cost
     const shippingCost = isFreeShipping ? 0 : 7.50;
     const finalTotalCents = Math.round((discountedSubtotal + shippingCost) * 100);
 
-    // This await is now guaranteed to sit cleanly inside the async wrapper
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: finalTotalCents,
-      currency: 'usd',
-      receipt_email: email || undefined,
-      metadata: { name: name || 'Customer' },
-      automatic_payment_methods: { enabled: true },
-    });
-
-    res.send({ clientSecret: paymentIntent.client_secret });
-
-  } catch (e) {
-    console.error("Stripe Error:", e.message);
-    res.status(400).send({ error: e.message });
-  }
-});
-
-    const amountInCents = calculateOrderAmount(items);
-
+    // 4. Generate dynamic item description strings for Stripe receipts
     const itemDescriptions = items.map(item => {
       return `${item.qty}x ${item.bike} (${item.color})`;
     }).join(', ');
 
+    const shippingDisplay = isFreeShipping ? "FREE Shipping" : "$7.50 Shipping";
+
+    // 5. Create a single, clean Stripe Payment Intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
+      amount: finalTotalCents,
       currency: 'usd',
-      description: `VoltMoto Order: ${itemDescriptions} (+ $7.50 Shipping)`,
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      receipt_email: email,
+      description: `VoltMoto Order: ${itemDescriptions} (+ ${shippingDisplay})`,
+      receipt_email: email || undefined,
       metadata: {
-        customer_name: name,
-        customer_email: email,
+        customer_name: name || 'Customer',
+        customer_email: email || 'N/A',
         items_ordered: itemDescriptions,
-        shipping_fee: "$7.50"
-      }
+        shipping_fee: isFreeShipping ? "FREE" : "$7.50",
+        discount_percentage: `${activeDiscount * 100}%`
+      },
+      automatic_payment_methods: { enabled: true },
     });
 
-    res.send({
-      clientSecret: paymentIntent.client_secret,
-    });
+    // 6. Send client secret back to the frontend
+    res.send({ clientSecret: paymentIntent.client_secret });
 
   } catch (error) {
     console.error("Stripe Error Details:", error.message);
