@@ -912,12 +912,12 @@ function selectBike(selectElement) {
   var selectedValue = selectElement.value;
   var mainImg = document.getElementById('galleryMainImg');
 
-  if (selectedValue) {
-    // CHANGE THIS LINE FOR TESTING:
-    // Point it to your actual working default photo filename
-    mainImg.src = 'images/' + selectedValue + '.jpg';
-  } else {
+  // If "No Connector" or empty selection, show default image
+  if (selectedValue === 'no-connector' || !selectedValue) {
     mainImg.src = 'images/default-bike.jpg';
+  } else {
+    // For all actual bikes, attempt to load their specific photo
+    mainImg.src = 'images/' + selectedValue + '.jpg';
   }
 }
 
