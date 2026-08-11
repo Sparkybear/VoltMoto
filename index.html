@@ -908,22 +908,23 @@ function selectImg(idx) {
 
 function finishOrder() { cart = []; updateCartUI(); closeCheckout(); setTimeout(function(){ location.reload(); }, 300); }
 
-// Updates main image when a user selects a bike from the dropdown
-  function selectBike(selectElement) {
-    var selectedValue = selectElement.value;
-    var mainImg = document.getElementById('galleryMainImg');
+function selectBike(selectElement) {
+  var selectedValue = selectElement.value;
+  var mainImg = document.getElementById('galleryMainImg');
 
-    if (selectedValue) {
-      mainImg.src = 'images/' + selectedValue + '.jpg';
-    } else {
-      mainImg.src = 'images/default-bike.jpg';
-    }
+  if (selectedValue) {
+    // CHANGE THIS LINE FOR TESTING:
+    // Point it to your actual working default photo filename
+    mainImg.src = 'images/default-bike.jpg'; 
+  } else {
+    mainImg.src = 'images/default-bike.jpg';
   }
+}
 
-  // Updates main image when a user clicks one of the 3 thumbnails
-  function changeMainImage(imagePath) {
-    document.getElementById('galleryMainImg').src = imagePath;
-  }
+// Updates main image when a user clicks one of the 3 thumbnails
+function changeMainImage(imagePath) {
+  document.getElementById('galleryMainImg').src = imagePath;
+}
 </script>
 </body>
 </html>
